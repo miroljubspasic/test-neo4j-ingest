@@ -1,9 +1,27 @@
 import os
+import argparse
 from dotenv import load_dotenv
 from langchain_community.vectorstores.neo4j_vector import Neo4jVector
 from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
-
 load_dotenv()
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--k', default=3)
+parser.add_argument('--radius', default=1)
+parser.add_argument('--query', default="israel gdp")
+
+
+args = parser.parse_args()
+
+query = args.query
+
+radius = int(args.radius)
+if radius < 1 : radius = 1
+
+k = int(args.k)
+if k < 1 : k = 1
+
 
 NEO4J_URL = os.getenv('NEO4J_URL')
 NEO4J_USER = os.getenv('NEO4J_USER')
@@ -25,9 +43,6 @@ embeddings = HuggingFaceInferenceAPIEmbeddings(
     model_name="intfloat/multilingual-e5-large"
 )
 
-radius = 5
-if radius < 1 : radius = 1
-k=1
 
 retrieval_query = f"""
             WITH node AS nodeEmb, score
@@ -55,7 +70,7 @@ existing_index_return = Neo4jVector.from_existing_index(
 
 
 
-result = existing_index_return.similarity_search_with_score("israel gdp  ", k=k)
+result = existing_index_return.similarity_search_with_score(query, k=k)
 
 for doc in result:
     print(doc)
